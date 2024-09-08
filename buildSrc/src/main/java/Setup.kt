@@ -3,6 +3,7 @@ import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.dsl.ApkSigningConfig
 import com.android.build.api.variant.ApplicationAndroidComponentsExtension
 import com.android.build.gradle.BaseExtension
+import com.android.build.gradle.LibraryExtension
 import com.android.build.gradle.internal.dsl.BaseAppModuleExtension
 import com.android.builder.internal.packaging.IncrementalPackager
 import com.android.tools.build.apkzlib.sign.SigningExtension
@@ -15,8 +16,8 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Delete
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
@@ -25,6 +26,8 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.StopExecutionException
 import org.gradle.api.tasks.Sync
 import org.gradle.api.tasks.TaskAction
+import org.gradle.kotlin.dsl.assign
+import org.gradle.kotlin.dsl.exclude
 import org.gradle.kotlin.dsl.filter
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.getValue
@@ -32,18 +35,38 @@ import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.provideDelegate
 import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.registering
-import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
+import org.gradle.kotlin.dsl.withType
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.net.URI
 import java.security.KeyStore
+import java.security.MessageDigest
 import java.security.cert.X509Certificate
+import java.util.HexFormat
 import java.util.jar.JarFile
 import java.util.zip.Deflater
 import java.util.zip.DeflaterOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
+
+private fun Project.androidBase(configure: Action<BaseExtension>) =
+    extensions.configure("android", configure)
+
+private fun Project.android(configure: Action<BaseAppModuleExtension>) =
+    extensions.configure("android", configure)
+
+private val Project.androidApp: BaseAppModuleExtension
+    get() = extensions["android"] as BaseAppModuleExtension
+
+private val Project.androidLib: LibraryExtension
+    get() = extensions["android"] as LibraryExtension
+
+private val Project.androidComponents
+    get() = extensions.getByType(ApplicationAndroidComponentsExtension::class.java)
+
 
 private fun Project.androidBase(configure: Action<BaseExtension>) =
     extensions.configure("android", configure)
