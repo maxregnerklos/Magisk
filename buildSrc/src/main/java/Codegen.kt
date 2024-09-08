@@ -2,19 +2,28 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
+import org.gradle.api.tasks.TaskAction
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.PrintStream
 import java.security.SecureRandom
-import java.util.*
+import java.util.Random
 import javax.crypto.Cipher
 import javax.crypto.CipherOutputStream
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 import kotlin.random.asKotlinRandom
 
+// Set non-zero value here to fix the random seed for reproducible builds
+// CI builds are always reproducible
 // Set non-zero value here to fix the random seed for reproducible builds
 // CI builds are always reproducible
 val RAND_SEED = if (System.getenv("CI") != null) 42 else 0
@@ -206,6 +215,7 @@ fun genStubClasses(factoryOutDir: File, appOutDir: File) {
         }
     }.distinct().iterator()
 
+
     fun genClass(type: String, outDir: File) {
         val clzName = classNameGenerator.next()
         val (pkg, name) = clzName.split('.')
@@ -218,7 +228,7 @@ fun genStubClasses(factoryOutDir: File, appOutDir: File) {
     }
 
     genClass("DelegateComponentFactory", factoryOutDir)
-    genClass("DelegateApplication", appOutDir)
+    genClass("StubApplication", appOutDir)
 }
 
 fun genEncryptedResources(res: ByteArray, outDir: File) {
